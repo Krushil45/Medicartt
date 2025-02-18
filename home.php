@@ -9,28 +9,25 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="shortcut icon" href="images/icon.svg" type="image/x-icon">
-    <link rel="stylesheet" href="css/sidenav.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/home.css">
     <script src="js/restrict.js"></script>
+    <script src="js/sidebar.js"></script>
   </head>
   <body>
-    <?php include "sections/sidenav.html"; ?>
+    
     <div class="container-fluid">
       <div class="container">
-        <!-- header section -->
-        <?php
-          require "php/header.php";
-          createHeader('home', 'Dashboard', 'Home');
-        ?>
+      
         <!-- header section end -->
 
         <!-- form content -->
         <div class="row">
           <div class="row col col-xs-8 col-sm-8 col-md-8 col-lg-8">
-
+          <?php include 'sidebar.php'; ?>
             <?php
               function createSection1($location, $title, $table) {
-                require 'php/db_connection.php';
+                require 'C:\xampp\htdocs\MediSync\php\php\db_connction.php';
 
                 $query = "SELECT * FROM $table";
                 if($title == "Out of Stock")
@@ -82,7 +79,7 @@
               <table class="table table-bordered table-striped table-hover">
                 <tbody>
                   <?php
-                    require 'php/db_connection.php';
+                    require 'C:\xampp\htdocs\MediSync\php\php\db_connction.php';
                     if($con) {
                       $date = date('Y-m-d');
                   ?>

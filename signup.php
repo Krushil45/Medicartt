@@ -1,101 +1,149 @@
+<?php
+// Include database connection
+require 'C:\xampp\htdocs\MediSync\php\php\db_connction.php';
+
+// Start session
+session_start();
+
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get form data
+    $pharmacy_name = trim($_POST['pharmacy_name']);
+    $address = trim($_POST['address']);
+    $email = trim($_POST['email']);
+    $contact_number = trim($_POST['contact_number']);
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    $confirm_password = trim($_POST['confirm_password']);
+
+    // Check if passwords match
+    if ($password !== $confirm_password) {
+        $error_message = "Error: Passwords do not match!";
+    } else {
+        // Hash password using bcrypt
+        $password_hash = md5($password);
+
+        // Check if username already exists
+        $stmt = $con->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            $error_message = "Error: Username already exists!";
+        } else {
+            $stmt->close();
+
+            // Insert pharmacy details
+            $stmt = $con->prepare("INSERT INTO pharmacy_details (pharmacy_name, address, email, contact_number) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $pharmacy_name, $address, $email, $contact_number);
+            $stmt->execute();
+            $stmt->close();
+
+            // Insert new user into the database
+            $stmt = $con->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)");
+            $stmt->bind_param("ss", $username, $password_hash);
+
+            if ($stmt->execute()) {
+                // Redirect to login after successful signup
+                header("Location: login.php");
+                exit();
+            } else {
+                $error_message = "Error: Unable to register user!";
+            }
+        }
+        $stmt->close();
+    }
+    $con->close();
+}
+?>
+
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
+<html lang="en">
+<head>
     <meta charset="utf-8">
-    <title>Pharmacy Management - SETUP</title>
+    <title>Pharmacy Management - Signup</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
-		<script src="bootstrap/js/jquery.min.js"></script>
-		<script src="bootstrap/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
-    <link rel="shortcut icon" href="images/icon.svg" type="image/x-icon">
+    <script src="bootstrap/js/jquery.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
     <link rel="stylesheet" href="css/index.css">
-    <script src="js/validateForm.js"></script>
-    <script src="js/index.js"></script>
-    <script> isSetupDone(); </script>
-  </head>
-  <body style="background-image: url('images/cap.jpg');">
-    <div class="container">
-      <div class="card m-auto p-2">
+</head>
+<body>
+<div class="container">
+    <div class="card m-auto p-2">
         <div class="card-body">
-          <form name="login-form" class="login-form" action="save_admin.php" method="post" onsubmit="return validateAndSetup();">
-            <div class="logo">
-              <h1 class="logo-caption font-weight-bolder"><span class="tweak">P</span>harmacy <span class="tweak">M</span>anagement</h1>
-        			<h2 class="logo-caption font-weight-bolder"><span class="tweak">O</span>ne <span class="tweak">T</span>ime <span class="tweak">S</span>etup</h2>
-              <p class="h5 text-center text-light">Enter necessary pharmacy details<p>
-        		</div> <!-- logo class -->
+            <form name="signup-form" class="login-form" action="signup.php" method="POST">
+                <div class="logo">
+                    <h1 class="logo-caption"><span class="tweak">S</span>ign Up</h1>
+                    <p class="h5 text-center text-light">Enter your pharmacy and account details</p>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-plus-square text-white"></i></span>
-              </div>
-              <input id="pharmacy_name" type="text" class="form-control" placeholder="pharmacy name" onkeyup="validateName(this.value, 'pharmacy_name_error');" >
-            </div> <!--input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="pharmacy_name_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-plus-square text-white"></i></span>
+                    </div>
+                    <input name="pharmacy_name" type="text" class="form-control" placeholder="Pharmacy Name" required>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-address-card text-white"></i></span>
-              </div>
-              <textarea id="address" class="form-control" placeholder="address" onkeyup="validateAddress(this.value, 'address_error');" style="max-height: 100px;" ></textarea>
-            </div> <!-- input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="address_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-address-card text-white"></i></span>
+                    </div>
+                    <textarea name="address" class="form-control" placeholder="Address" required></textarea>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-envelope text-white"></i></span>
-              </div>
-              <input id="email" type="email" class="form-control" placeholder="email" >
-            </div> <!--input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="email_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-envelope text-white"></i></span>
+                    </div>
+                    <input name="email" type="email" class="form-control" placeholder="Email" required>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-mobile-alt text-white"></i></span>
-              </div>
-              <input id="contact_number" type="number" class="form-control" placeholder="contact number" onkeyup="validateContactNumber(this.value, 'contact_number_error');" >
-            </div> <!-- input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="contact_number_error" style="display: none;"></code>
-            <!--
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fa fa-user-circle text-white"></i></span>
-              </div>
-              <input type="text" class="form-control" placeholder="select profile image" onclick="document.getElementById('profile_image').click();" id="profile_name">
-              &emsp;<p class="m-auto text-light">Optional</p>
-              <input id="profile_image" type="file" accept="image/*" class="form-control" style="display: none;" onchange="document.getElementById('profile_name').value = this.value.split('\\').pop()">
-            </div> <!-- input-group class
-            -->
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-mobile-alt text-white"></i></span>
+                    </div>
+                    <input name="contact_number" type="number" class="form-control" placeholder="Contact Number" required>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-user text-white"></i></span>
-              </div>
-              <input id="username" type="text" class="form-control" placeholder="enter username" onblur="notNull(this.value, 'username_error');" >
-            </div> <!--input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="username_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-user text-white"></i></span>
+                    </div>
+                    <input name="username" type="text" class="form-control" placeholder="Enter Username" required>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-lock text-white"></i></span>
-              </div>
-              <input id="password" type="text" class="form-control" placeholder="enter password">
-            </div> <!-- input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="password_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-lock text-white"></i></span>
+                    </div>
+                    <input name="password" type="password" class="form-control" placeholder="Enter Password" required>
+                </div>
 
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
-              </div>
-              <input id="confirm_password" type="password" class="form-control" placeholder="confirm password">
-            </div> <!-- input-group class -->
-            <code class="text-light small font-weight-bold float-right mb-2" id="confirm_password_error" style="display: none;"></code>
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
+                    </div>
+                    <input name="confirm_password" type="password" class="form-control" placeholder="Confirm Password" required>
+                </div>
 
-            <div class="form-group">
-              <button class="btn btn-default btn-block btn-custom">START</button>
+                <!-- Error Message -->
+                <?php if (!empty($error_message)) { ?>
+                    <div class="text-danger text-center"><?php echo $error_message; ?></div>
+                <?php } ?>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-default btn-block btn-custom">Sign Up</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer">
+            <div class="text-center">
+                <a class="text-light" href="login.php">Already have an account? Login</a>
             </div>
-          </form><!-- form close -->
-        </div> <!-- cord-body class -->
-      </div> <!-- card class -->
-    </div> <!-- container class -->
-  </body>
+        </div>
+    </div>
+</div>
+</body>
 </html>

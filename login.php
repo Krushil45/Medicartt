@@ -1,6 +1,41 @@
+<?php
+// Start the session
+session_start();
+
+// Include the database connection
+require 'C:\xampp\htdocs\MediSync\php\php\db_connction.php';
+
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get the submitted username and password
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Hash the password using MD5 (this should match the hash in the database)
+    $password_hash = md5($password);
+
+    // Query to validate the credentials
+    $query = "SELECT * FROM users WHERE username = ? AND password_hash = ?";
+    $stmt = $con->prepare($query);
+    $stmt->bind_param("ss", $username, $password_hash);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Login successful
+        $_SESSION['username'] = $username; // Store the username in the session
+        header("Location: home.php"); // Redirect to the landing page
+        exit();
+    } else {
+        // Login failed
+        $error_message = "Invalid username or password!";
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Pharmacy Management - Login</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
@@ -10,139 +45,46 @@
     <link rel="shortcut icon" href="images/icon.svg" type="image/x-icon">
     <link rel="stylesheet" href="css/index.css">
     <script src="js/index.js"></script>
-    <script src="js/validateForm.js"></script>
-    <script>
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function() {
-        if (xhttp.readyState == 4 && xhttp.status == 200) {
-          if (xhttp.responseText == "") {
-            window.location.href = "http://localhost/Pharmacy-Management/index.php";
-          } else if (xhttp.responseText == "true") {
-            window.location.href = "http://localhost/Pharmacy-Management/home.php";
-          }
-        }
-      };
-      xhttp.open("GET", "php/db_connection.php?action=is_logged_in", false);
-      xhttp.send();
-    </script>
-  </head>
-  <body>
-    <div class="container">
-
-      <div id="login-form" class="card m-auto p-2">
+</head>
+<body>
+<div class="container">
+    <div class="card m-auto p-2">
         <div class="card-body">
-          <form name="login-form" class="login-form" action="home.php" method="post" onsubmit="return validateCredentials();">
-            <div class="logo">
-              <img src="images/prof.jpg" class="profile"/>
-              <h1 class="logo-caption"><span class="tweak">L</span>ogin</h1>
-            </div> <!-- logo class -->
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-user text-white"></i></span>
-              </div>
-              <input name="username" type="text" class="form-control" placeholder="username" onkeyup="validate();" required>
-            </div> <!--input-group class -->
-            <div class="input-group form-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
-              </div>
-              <input name="password" type="password" class="form-control" placeholder="password" onkeyup="validate();" required>
-            </div> <!-- input-group class -->
-            <div class="form-group">
-              <button class="btn btn-default btn-block btn-custom">Login</button>
-            </div>
-            <div id="error-message" class="text-danger text-center" style="display: none;">Invalid username or password</div>
-          </form><!-- form close -->
-
-        </div> <!-- cord-body class -->
+            <form name="login-form" class="login-form" action="login.php" method="post">
+                <div class="logo">
+                    <img src="images/prof.jpg" class="profile"/>
+                    <h1 class="logo-caption"><span class="tweak">L</span>ogin</h1>
+                </div> <!-- logo class -->
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-user text-white"></i></span>
+                    </div>
+                    <input name="username" type="text" class="form-control" placeholder="username" required>
+                </div> <!-- input-group class -->
+                <div class="input-group form-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
+                    </div>
+                    <input name="password" type="password" class="form-control" placeholder="password" required>
+                </div> <!-- input-group class -->
+                <!-- Error Message -->
+                <?php if (!empty($error_message)) { ?>
+                    <div class="text-danger text-center"><?php echo $error_message; ?></div>
+                <?php } ?>
+                <!-- Submit Button -->
+                <div class="form-group">
+                    <button class="btn btn-default btn-block btn-custom">Login</button>
+                </div>
+            </form><!-- form close -->
+        </div> <!-- card-body class -->
         <div class="card-footer">
-          <div class="text-center">
-            <a class="text-light" href="forgot_password.php" style="cursor: pointer;">Forgot password?</a>
-          </div>
-        </div> <!-- cord-footer class -->
-      </div> <!-- card class -->
-
-      <div id="forgot-password-form" class="card m-auto p-2" style="display: none;">
-        <div class="card-body">
-          <div name="login-form" class="login-form">
-            <div class="logo">
-              <img src="images/prof.jpg" class="profile"/>
-              <h1 class="logo-caption"><span class="tweak">F</span>orget <span class="tweak">P</span>assword</h1>
-            </div> <!-- logo class -->
-
-            <div id="email-number-fields">
-              <p class="h6 text-center text-light">Enter email and contact number below to reset username and password<p>
-              <div class="input-group form-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="fas fa-envelope text-white"></i></span>
-                </div>
-                <input id="email" type="email" class="form-control" placeholder="enter email" required>
-              </div> <!--input-group class -->
-
-              <div class="input-group form-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
-                </div>
-                <input id="contact_number" type="number" class="form-control" placeholder="enter contact number" onkeyup="validate();" required>
-              </div> <!-- input-group class -->
-
-              <div class="form-group">
-                <button class="btn btn-default btn-block btn-custom" onclick="verifyEmailNumber();">Verify</button>
-              </div>
+            <div class="text-center">
+                <a class="text-light" href="forgot_password.php">Forgot password?</a>
+                <br>
+                <a class="text-light" href="signup.php">Sign Up</a>
             </div>
-
-
-            <div id="username-password-fields" style="display: none;">
-              <div class="input-group form-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="fas fa-user text-white"></i></span>
-                </div>
-                <input id="username" type="text" class="form-control" placeholder="enter username" onblur="notNull(this.value, 'username_error');" >
-              </div> <!--input-group class -->
-              <code class="text-light small font-weight-bold float-right mb-2" id="username_error" style="display: none;"></code>
-
-              <div class="input-group form-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="fas fa-lock text-white"></i></span>
-                </div>
-                <input id="password" type="text" class="form-control" placeholder="enter password" onkeyup="validatePassword();" >
-              </div> <!-- input-group class -->
-              <code class="text-light small font-weight-bold float-right mb-2" id="password_error" style="display: none;"></code>
-
-              <div class="input-group form-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="fas fa-key text-white"></i></span>
-                </div>
-                <input id="confirm_password" type="password" class="form-control" placeholder="confirm password" onkeyup="validatePassword();" >
-              </div> <!-- input-group class -->
-              <code class="text-light small font-weight-bold float-right mb-2" id="confirm_password_error" style="display: none;"></code>
-              <div class="form-group">
-                <button class="btn btn-default btn-block btn-custom" onclick="updateUsernamePassword();">Reset Password</button>
-              </div>
-            </div>
-          </div><!-- form close -->
-
-        </div> <!-- cord-body class -->
-        <div class="card-footer">
-          <div class="text-center">
-            <a class="text-light" onclick="displayLoginForm();" style="cursor: pointer;">Login here</a>
-          </div>
-        </div> <!-- cord-footer class -->
-      </div> <!-- card class -->
-
-    </div> <!-- container class -->
-    <script>
-      function validateCredentials() {
-        var username = document.forms["login-form"]["username"].value;
-        var password = document.forms["login-form"]["password"].value;
-        // Add your validation logic here
-        if (username == "admin" && password == "admin") {
-          return true;
-        } else {
-          document.getElementById("error-message").style.display = "block";
-          return false;
-        }
-      }
-    </script>
-  </body>
+        </div> <!-- card-footer class -->
+    </div> <!-- card class -->
+</div>
+</body>
 </html>
